@@ -10,7 +10,7 @@ __pycache__/
 # Env & secrets
 .env
 
-# Node / frontend (Phase 4+)
+# Node / frontend 
 node_modules/
 dist/
 
