@@ -10,9 +10,6 @@ __pycache__/
 # Env & secrets
 .env
 
-# Assignment PDF
-Full Stack Engineer - Take Home Assignment.pdf
-
 # Node / frontend (Phase 4+)
 node_modules/
 dist/
