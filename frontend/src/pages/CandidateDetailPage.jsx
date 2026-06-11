@@ -7,6 +7,7 @@ import ScoreList from "../components/ScoreList";
 import { deleteCandidate, fetchCandidate } from "../api/candidates";
 import { useAuth } from "../hooks/useAuth";
 import { useSubmitScore } from "../hooks/useScores";
+import { formatAxiosError } from "../utils/errors";
 import { formatAverage, formatCategory, formatDate, formatStatus } from "../utils/formatters";
 
 export default function CandidateDetailPage() {
@@ -37,7 +38,7 @@ export default function CandidateDetailPage() {
   if (isError) {
     return (
       <div className="status-box status-box--error">
-        {error?.response?.data?.detail || "Failed to load candidate."}
+        {formatAxiosError(error, "Failed to load candidate.")}
       </div>
     );
   }
@@ -122,7 +123,7 @@ export default function CandidateDetailPage() {
           isSubmitting={scoreMutation.isPending}
           errorMessage={
             scoreMutation.isError
-              ? scoreMutation.error?.response?.data?.detail || "Failed to save score."
+              ? formatAxiosError(scoreMutation.error, "Failed to save score.")
               : ""
           }
         />
@@ -140,7 +141,9 @@ export default function CandidateDetailPage() {
       )}
 
       {deleteMutation.isError && (
-        <p className="error-text">Failed to archive candidate.</p>
+        <p className="error-text">
+          {formatAxiosError(deleteMutation.error, "Failed to archive candidate.")}
+        </p>
       )}
     </div>
   );

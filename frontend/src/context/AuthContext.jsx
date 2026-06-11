@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { fetchCurrentUser, login as loginRequest, register as registerRequest } from "../api/auth";
+import { queryClient } from "../lib/queryClient.js";
 import { TOKEN_KEY } from "../utils/constants";
 
 const AuthContext = createContext(null);
@@ -31,6 +32,7 @@ export function AuthProvider({ children }) {
   }, [login]);
 
   const logout = useCallback(() => {
+    queryClient.clear();
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);

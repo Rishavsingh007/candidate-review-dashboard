@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { updateInternalNotes } from "../api/candidates";
+import { formatAxiosError } from "../utils/errors";
 
 export default function NotesPanel({ candidateId, initialNotes }) {
   const queryClient = useQueryClient();
@@ -33,7 +34,9 @@ export default function NotesPanel({ candidateId, initialNotes }) {
         placeholder="Add internal notes about this candidate…"
       />
       {mutation.isError && (
-        <p className="error-text">Failed to save notes. Please try again.</p>
+        <p className="error-text">
+          {formatAxiosError(mutation.error, "Failed to save notes. Please try again.")}
+        </p>
       )}
       <button
         type="button"

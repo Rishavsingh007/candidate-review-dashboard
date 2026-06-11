@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Filters from "../components/Filters";
 import { useAuth } from "../hooks/useAuth";
 import { useCandidates } from "../hooks/useCandidates";
 import { PAGE_SIZE } from "../utils/constants";
+import { formatAxiosError } from "../utils/errors";
 import { formatAverage, formatStatus } from "../utils/formatters";
 
 const emptyFilters = {
@@ -34,6 +35,14 @@ export default function CandidateListPage() {
   );
 
   const { data, isLoading, isError, error } = useCandidates(queryParams);
+
+  useEffect(() => {
+    if (!data || data.total === 0) return;
+    if (offset >= data.total) {
+      const lastPageOffset = Math.floor((data.total - 1) / PAGE_SIZE) * PAGE_SIZE;
+      setOffset(lastPageOffset);
+    }
+  }, [data?.total, offset]);
 
   const handleFilterChange = (field, value) => {
     setFilters((current) => ({ ...current, [field]: value }));
@@ -75,7 +84,7 @@ export default function CandidateListPage() {
 
       {isError && (
         <div className="status-box status-box--error">
-          {error?.response?.data?.detail || "Failed to load candidates."}
+          {formatAxiosError(error, "Failed to load candidates.")}
         </div>
       )}
 

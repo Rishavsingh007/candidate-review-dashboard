@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { formatAxiosError } from "../utils/errors";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -24,8 +25,7 @@ export default function LoginPage() {
       }
       navigate("/candidates");
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Authentication failed");
+      setError(formatAxiosError(err, "Authentication failed"));
     } finally {
       setSubmitting(false);
     }

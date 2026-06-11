@@ -58,3 +58,34 @@ def test_soft_delete_archives_candidate(seeded_client):
 
     listing = seeded_client.get("/candidates", headers=auth_headers(admin_token))
     assert listing.json()["total"] == 9
+
+
+def test_reviewer_cannot_list_archived_candidates(seeded_client):
+    admin_token = login(seeded_client, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD)
+    reviewer_token = login(
+        seeded_client, SEED_REVIEWER_EMAILS[0][0], SEED_REVIEWER_EMAILS[0][1]
+    )
+    candidate_id = first_candidate_id(seeded_client, admin_token)
+
+    delete = seeded_client.delete(
+        f"/candidates/{candidate_id}",
+        headers=auth_headers(admin_token),
+    )
+    assert delete.status_code == 204
+
+    reviewer_list = seeded_client.get(
+        "/candidates",
+        headers=auth_headers(reviewer_token),
+        params={"status": "archived"},
+    )
+    assert reviewer_list.status_code == 200
+    assert reviewer_list.json()["total"] == 0
+    assert reviewer_list.json()["items"] == []
+
+    admin_list = seeded_client.get(
+        "/candidates",
+        headers=auth_headers(admin_token),
+        params={"status": "archived"},
+    )
+    assert admin_list.status_code == 200
+    assert admin_list.json()["total"] >= 1

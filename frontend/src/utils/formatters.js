@@ -14,7 +14,18 @@ export function formatStatus(status) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+function parseApiDate(value) {
+  if (!value) return null;
+  if (typeof value === "string") {
+    
+    const hasTimezone = value.endsWith("Z") || /[+-]\d{2}:\d{2}$/.test(value);
+    return new Date(hasTimezone ? value : `${value}Z`);
+  }
+  return new Date(value);
+}
+
 export function formatDate(value) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString();
+  const date = parseApiDate(value);
+  if (!date || Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString();
 }

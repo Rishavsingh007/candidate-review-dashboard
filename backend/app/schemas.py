@@ -1,8 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
 
 from app.models import ScoreCategory
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 # --- Auth ---
@@ -51,6 +57,10 @@ class ScoreResponse(BaseModel):
     note: str | None
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("created_at", "updated_at")
+    def serialize_datetimes_utc(self, value: datetime) -> datetime:
+        return _as_utc(value)
 
 
 class ScoreResponseAdmin(ScoreResponse):

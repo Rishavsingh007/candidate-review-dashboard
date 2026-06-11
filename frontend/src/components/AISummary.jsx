@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateSummary } from "../api/candidates";
+import { formatAxiosError } from "../utils/errors";
 
 export default function AISummary({ candidateId, initialSummary }) {
   const queryClient = useQueryClient();
@@ -45,7 +46,7 @@ export default function AISummary({ candidateId, initialSummary }) {
 
       {mutation.isError && (
         <div className="status-box status-box--error">
-          Failed to generate summary. Please try again.
+          {formatAxiosError(mutation.error, "Failed to generate summary. Please try again.")}
         </div>
       )}
 

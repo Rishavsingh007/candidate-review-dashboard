@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException, status
 from sqlalchemy import String, cast, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Candidate, CandidateStatus, Score, User, UserRole, utcnow
@@ -43,10 +44,14 @@ class CandidateService:
         role_applied: str | None,
         skill: str | None,
         keyword: str | None,
+        is_admin: bool,
     ):
         if status:
             query = query.filter(Candidate.status == status)
         else:
+            query = query.filter(Candidate.status != CandidateStatus.ARCHIVED.value)
+
+        if not is_admin:
             query = query.filter(Candidate.status != CandidateStatus.ARCHIVED.value)
 
         if role_applied:
@@ -107,7 +112,12 @@ class CandidateService:
             avg_subq, Candidate.id == avg_subq.c.candidate_id
         )
         base_query = self._apply_filters(
-            base_query, status=status, role_applied=role_applied, skill=skill, keyword=keyword
+            base_query,
+            status=status,
+            role_applied=role_applied,
+            skill=skill,
+            keyword=keyword,
+            is_admin=is_admin,
         )
 
         count_query = select(func.count(Candidate.id))
@@ -117,6 +127,7 @@ class CandidateService:
             role_applied=role_applied,
             skill=skill,
             keyword=keyword,
+            is_admin=is_admin,
         )
         total = db.scalar(count_query) or 0
 
@@ -188,7 +199,7 @@ class CandidateService:
                 select(Score, User.email)
                 .join(User, Score.reviewer_id == User.id)
                 .where(Score.candidate_id == candidate_id)
-                .order_by(Score.created_at.desc())
+                .order_by(Score.updated_at.desc())
             )
             score_rows = db.execute(scores_query).all()
             scores = [
@@ -222,7 +233,7 @@ class CandidateService:
         scores = (
             db.query(Score)
             .filter(Score.candidate_id == candidate_id, Score.reviewer_id == user.id)
-            .order_by(Score.created_at.desc())
+            .order_by(Score.updated_at.desc())
             .all()
         )
         return CandidateDetailReviewer(
@@ -273,9 +284,29 @@ class CandidateService:
             note=payload.note,
         )
         db.add(score)
-        db.commit()
-        db.refresh(score)
-        return UpsertScoreResult(score=score, created=True)
+        try:
+            db.commit()
+            db.refresh(score)
+            return UpsertScoreResult(score=score, created=True)
+        except IntegrityError:
+            db.rollback()
+            existing = (
+                db.query(Score)
+                .filter(
+                    Score.candidate_id == candidate_id,
+                    Score.reviewer_id == user.id,
+                    Score.category == payload.category.value,
+                )
+                .first()
+            )
+            if existing is None:
+                raise
+            existing.score = payload.score
+            existing.note = payload.note
+            existing.updated_at = utcnow()
+            db.commit()
+            db.refresh(existing)
+            return UpsertScoreResult(score=existing, created=False)
 
     async def generate_summary(
         self, db: Session, candidate_id: str, *, force: bool = False

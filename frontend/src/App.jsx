@@ -1,13 +1,23 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { setUnauthorizedHandler } from "./api/client";
 import { useAuth } from "./hooks/useAuth";
 import AppRoutes from "./routes/AppRoutes";
 
 export default function App() {
+  const navigate = useNavigate();
   const { user, logout, initialize } = useAuth();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      logout();
+      navigate("/login", { replace: true });
+    });
+  }, [logout, navigate]);
 
   return (
     <div className="app-shell">
