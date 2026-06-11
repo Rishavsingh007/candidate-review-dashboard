@@ -1,46 +1,5 @@
-import os
-
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
-os.environ["DATABASE_URL"] = "sqlite://"
-os.environ["JWT_SECRET"] = "test-secret"
-
-from app.database import Base, get_db  # noqa: E402
-from app.main import app  # noqa: E402
-from app.models import UserRole  # noqa: E402
-
-engine = create_engine(
-    "sqlite://",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-@pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-
-    def override_get_db():
-        db = TestingSessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app.dependency_overrides[get_db] = override_get_db
-    yield
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-def client():
-    return TestClient(app)
+from app.models import UserRole
+from tests.conftest import auth_headers, login
 
 
 def test_register_forces_reviewer_role(client):
@@ -83,11 +42,7 @@ def test_me_returns_current_user(client):
         "/auth/register",
         json={"email": "me@example.com", "password": "password123"},
     )
-    login = client.post(
-        "/auth/login",
-        json={"email": "me@example.com", "password": "password123"},
-    )
-    token = login.json()["access_token"]
-    response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    token = login(client, "me@example.com", "password123")
+    response = client.get("/auth/me", headers=auth_headers(token))
     assert response.status_code == 200
     assert response.json()["email"] == "me@example.com"
