@@ -27,7 +27,7 @@ docker compose up --build
 | API docs (Swagger) | http://localhost:8000/docs |
 | API docs (ReDoc)   | http://localhost:8000/redoc  |
 
-Copy [`.env.example`](.env.example) to `.env` and adjust values if needed. **Do not commit a real `.env` file**, only dummy values belong in the repo. Docker Compose reads `JWT_SECRET` from the environment (defaults to a dev placeholder).
+Copy [`.env.example`](.env.example) to `.env` and adjust values if needed. Docker Compose reads `JWT_SECRET` from the environment (defaults to a dev placeholder).
 
 ### Smoke test
 
@@ -57,8 +57,7 @@ Seeded on first startup (also shown on the login page):
 | Reviewer | reviewer1@tech.com    | reviewerpass123  |
 | Reviewer | reviewer2@tech.com    | reviewerpass123  |
 
-New accounts can be registered via the UI; registration always creates a **reviewer** role (never admin). Open registration is enabled for the demo only, production would disable or gate it.
-
+New accounts can be registered via the UI; registration always creates a **reviewer** role.
 ## Local Development (without Docker)
 
 ### Backend
