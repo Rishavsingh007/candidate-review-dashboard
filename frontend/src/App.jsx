@@ -23,7 +23,7 @@ export default function App() {
     <div className="app-shell">
       {user && (
         <header className="app-header">
-          <div className="app-header__brand">TechKraft Review</div>
+          <div className="app-header__brand">Candidate Review Dashboard</div>
           <div className="app-header__meta">
             <span>
               {user.email} ({user.role})
